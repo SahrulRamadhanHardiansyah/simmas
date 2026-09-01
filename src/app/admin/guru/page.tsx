@@ -7,6 +7,7 @@ import {
     X, ChevronLeft, ChevronRight, AlertCircle, Copy, Check
 } from "lucide-react";
 import { useAlert } from "@/components/ui/Alert";
+import { Almarai } from "next/font/google";
 
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -17,21 +18,11 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-const JURUSAN_OPTIONS = [
-    "Teknik Elektronika (TE)",
-    "Teknik Ketenagalistrikan (TK)",
-    "Teknik Jaringan Komputer dan Telekomunikasi (TJKT)",
-    "Pengembangan Perangkat Lunak dan Gim (PPLG)",
-    "Broadcasting dan Perfilman (BP)",
-    "Desain dan Produksi Busana",
-    "Ototronika",
-    "Mekatronika",
-];
-
 export default function AdminGuruPage() {
     const alertApi = useAlert();
     const [stats, setStats] = useState({ totalGuru: 0, guruAktif: 0, rataRataBimbingan: 0 });
     const [data, setData] = useState<any[]>([]);
+    const [jurusanList, setJurusanList] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebounce(search, 500);
@@ -44,8 +35,23 @@ export default function AdminGuruPage() {
     const [newCreds, setNewCreds] = useState<{ email: string, passwordSementara: string } | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
-    const [formData, setFormData] = useState({ name: "", nip: "", jurusan: JURUSAN_OPTIONS[0], isActive: true });
+    const [formData, setFormData] = useState({ name: "", nip: "", jurusanId: "", isActive: true, alamat: "" });
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    const fetchJurusan = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Jurusan`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await res.json();
+            if (res.ok && result.status) setJurusanList(result.data);
+        } catch (err) {
+            console.error("Gagal mengambil data jurusan", err);
+        }
+    };
+
+    useEffect(() => { fetchJurusan(); }, []);
 
     const fetchGuru = async () => {
         setLoading(true);
@@ -117,9 +123,9 @@ export default function AdminGuruPage() {
     const openModal = (type: typeof activeModal, guru?: any) => {
         setSelectedGuru(guru || null);
         if (type === "add") {
-            setFormData({ name: "", nip: "", jurusan: JURUSAN_OPTIONS[0], isActive: true });
+            setFormData({ name: "", nip: "", jurusanId: "", isActive: true, alamat: "" });
         } else if (guru) {
-            setFormData({ name: guru.name, nip: guru.nip, jurusan: guru.jurusan, isActive: guru.isActive });
+            setFormData({ name: guru.name, nip: guru.nip, jurusanId: String(guru.jurusanId ?? ""), isActive: guru.isActive, alamat: guru.alamat });
         }
         setActiveModal(type);
     };
@@ -143,7 +149,7 @@ export default function AdminGuruPage() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Guru`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ name: formData.name, nip: formData.nip, jurusan: formData.jurusan })
+                body: JSON.stringify({ name: formData.name, nip: formData.nip, jurusanId: parseInt(formData.jurusanId), alamat: formData.alamat })
             });
             const result = await res.json();
 
@@ -169,7 +175,7 @@ export default function AdminGuruPage() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Guru/${selectedGuru.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ name: formData.name })
+                body: JSON.stringify({ name: formData.name, alamat: formData.alamat })
             });
             const result = await res.json();
 
@@ -293,7 +299,7 @@ export default function AdminGuruPage() {
                             className="w-full pl-9 pr-8 py-2 bg-muted/30 border border-border rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
                         >
                             <option value="">Semua Jurusan</option>
-                            {JURUSAN_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            {jurusanList.map((j: any) => <option key={j.id} value={j.namaJurusan}>{j.singkatan}</option>)}
                         </select>
                     </div>
 
@@ -334,6 +340,7 @@ export default function AdminGuruPage() {
                                 <th className="px-6 py-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">Nama Lengkap</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">Jurusan</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap text-center">Bimbingan</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap text-center">Alamat</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap text-center">Status</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap text-center">Aksi</th>
                             </tr>
@@ -374,12 +381,15 @@ export default function AdminGuruPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                            {row.jurusan.match(/\(([^)]+)\)/)?.[1] || row.jurusan} {/* Tampilkan singkatannya saja jika ada */}
+                                            {row.jurusanSingkatan || row.jurusan}
                                         </td>
                                         <td className="px-6 py-4 text-center whitespace-nowrap">
                                             <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 text-xs font-bold">
                                                 <Users className="w-3.5 h-3.5" /> {row.jumlahSiswaBimbinganAktif}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-muted-foreground">
+                                            {row.alamat ?? "-"}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold tracking-wider uppercase ${row.isActive ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-500 bg-rose-500/10 border-rose-500/20'}`}>
@@ -489,13 +499,21 @@ export default function AdminGuruPage() {
                                     <div>
                                         <label className="block text-[11px] font-bold text-muted-foreground tracking-widest uppercase mb-1.5">Kompetensi Keahlian / Jurusan</label>
                                         <select
-                                            required value={formData.jurusan} onChange={e => setFormData({ ...formData, jurusan: e.target.value })}
-                                            disabled={activeModal === "edit"} // Sesuai DTO backend yang hanya nerima Name
-                                            className={`w-full px-4 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none ${activeModal === 'edit' ? 'bg-muted/50 text-muted-foreground cursor-not-allowed' : 'bg-background'}`}
+                                            required value={formData.jurusanId} onChange={e => setFormData({ ...formData, jurusanId: e.target.value })}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none bg-background"
                                         >
-                                            {JURUSAN_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                            <option value="">Pilih Jurusan</option>
+                                            {jurusanList.map((j: any) => <option key={j.id} value={j.id}>{j.singkatan} — {j.namaJurusan}</option>)}
                                         </select>
                                         {activeModal === "edit" && <p className="text-[10px] text-muted-foreground mt-1">Jurusan tidak dapat diubah setelah pendaftaran.</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-muted-foreground tracking-widest uppercase mb-1.5">Alamat</label>
+                                        <input
+                                            type="text" required value={formData.alamat} onChange={e => setFormData({ ...formData, alamat: e.target.value })}
+                                            placeholder="Jl. Randupitu"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        />
                                     </div>
                                 </div>
                                 <div className="p-4 border-t border-border bg-muted/10 flex justify-end gap-3">

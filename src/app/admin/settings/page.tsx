@@ -5,6 +5,7 @@ import {
     Settings, Save, Loader2, CheckCircle2, AlertTriangle,
     AppWindow, Globe, Building2, RefreshCcw, X
 } from "lucide-react";
+import { useSettings } from "@/components/SettingsContext";
 
 type TabKey = "identitas" | "halaman-depan" | "sekolah";
 
@@ -50,6 +51,7 @@ export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
     const [savingTab, setSavingTab] = useState<TabKey | null>(null);
     const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const { refreshSettings } = useSettings();
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -126,6 +128,8 @@ export default function AdminSettingsPage() {
             const text = await res.text();
             const result = text ? JSON.parse(text) : null;
             if (!res.ok || !result?.status) throw new Error(result?.message || `Gagal menyimpan pengaturan (${res.status}).`);
+            setOriginal({ ...settings });
+            await refreshSettings();
             showToast("success", `Pengaturan ${TABS.find(t => t.key === tab)?.label} berhasil disimpan.`);
         } catch (err: any) {
             showToast("error", err.message || "Terjadi kesalahan saat menyimpan.");

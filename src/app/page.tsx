@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, GraduationCap, Users, ShieldCheck, BookCheck, ClipboardList, UserCheck, Building2, FileCheck2, Handshake, Monitor, Mail, Phone, MapPin, Layers } from "lucide-react";
 import DashboardMockup from "@/components/DashboardMockup";
 import Navbar from "@/components/Navbar";
+import { useSettings } from "@/components/SettingsContext";
 
 const features = [
   {
@@ -47,6 +48,7 @@ const footerLinks = [
 ];
 
 export default function LandingPage() {
+  const { settings } = useSettings();
   const [apiStats, setApiStats] = useState({
     totalJurnalDisetujui: 0,
     totalPresensiTercatat: 0,
@@ -88,13 +90,13 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="space-y-7 animate-fade-in-up">
               <p className="text-[11px] font-bold tracking-ultra-wide uppercase text-muted-foreground">
-                Sistem Informasi Manajemen Magang Siswa
+                {settings.appFullName}
               </p>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-tightest">
                 Magang<br />lebih<br />teratur.
               </h1>
               <p className="text-base lg:text-lg text-muted-foreground max-w-md leading-relaxed">
-                Platform manajemen magang siswa SMK yang menghubungkan sekolah, guru pembimbing, dan dunia usaha dalam satu sistem terpadu.
+                {settings.heroDescription}
               </p>
               <ul className="space-y-3">
                 {checkpoints.map((t, i) => (
@@ -128,7 +130,7 @@ export default function LandingPage() {
             <p className="text-sm font-bold tracking-extra-wide uppercase text-primary mb-3">Fitur Unggulan</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Satu platform untuk semua peran</h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              SIMMAS dirancang untuk memenuhi kebutuhan setiap stakeholder dalam proses magang siswa SMK.
+              {settings.appName} dirancang untuk memenuhi kebutuhan setiap stakeholder dalam proses magang siswa SMK.
             </p>
           </div>
 
@@ -202,10 +204,10 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                   <Layers className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-bold text-lg">SIMMAS</span>
+                <span className="font-bold text-lg">{settings.appName}</span>
               </div>
               <p className="text-sm text-white/60 leading-relaxed max-w-xs">
-                Sistem Informasi Manajemen Magang Siswa — platform terpadu untuk SMK di seluruh Indonesia.
+                {settings.appFullName} — {settings.appDescription}
               </p>
             </div>
 
@@ -225,7 +227,7 @@ export default function LandingPage() {
               <ul className="space-y-2.5 text-sm text-white/60">
                 <li className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-white/40" />
-                  <span>Jl. Pendidikan No. 1, Kota Bandung, Jawa Barat</span>
+                  <span>{settings.schoolAddress}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="w-4 h-4 shrink-0 text-white/40" />
@@ -233,14 +235,14 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="w-4 h-4 shrink-0 text-white/40" />
-                  <span>(022) 1234-5678</span>
+                  <span>{settings.schoolPhone}</span>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-white/10 pt-6 text-center">
-            <p className="text-xs text-white/40">© {new Date().getFullYear()} SIMMAS. Hak cipta dilindungi undang-undang.</p>
+            <p className="text-xs text-white/40">© {new Date().getFullYear()} {settings.appName}. Hak cipta dilindungi undang-undang.</p>
           </div>
         </div>
       </footer>

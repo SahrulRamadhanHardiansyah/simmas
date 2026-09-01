@@ -4,6 +4,9 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, CheckCircle2, Loader2, Layers } from "lucide-react";
+import { useSettings } from "@/components/SettingsContext";
+import { GoogleLogin } from "@react-oauth/google";
+import { ApiError } from "next/dist/server/api-utils";
 
 const DEMO_ACCOUNTS = [
   { email: "admin@simmas.sch.id", role: "ADMIN" },
@@ -25,6 +28,7 @@ const brandStats = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const { settings } = useSettings();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -99,6 +103,74 @@ export default function LoginPage() {
     setErrors({});
   }
 
+  const handleGoogle = async (credential: string) => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/Google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credential })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.status === "true") {
+        setLoading(true);
+        setErrors({});
+
+        try {
+          const token = data?.data?.token;
+
+          if (!token) {
+            throw new Error("Token tidak ditemukan dalam respons server.");
+          }
+
+          localStorage.setItem("token", token);
+
+          const meResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/Me`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          });
+
+          const meResult = await meResponse.json();
+
+          if (!meResponse.ok || !meResult.success) {
+            localStorage.removeItem("token");
+            throw new Error(meResult.message || "Gagal memuat profil pengguna.");
+          }
+
+          const userData = meResult.data;
+
+          if (!userData || !userData.role) {
+            throw new Error("Data role tidak ditemukan pada profil Anda.");
+          }
+
+          const userRole = userData.role.toLowerCase();
+
+          localStorage.setItem("role", userRole);
+          localStorage.setItem("user", JSON.stringify(userData));
+
+          router.push(`/${userRole}/dashboard`);
+
+        } catch (err: any) {
+          setErrors({ root: err.message });
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setErrors({ root: data.message || "Gagal login dengan Google." });
+      }
+    } catch {
+      setErrors({ root: "Gagal terhubung ke server." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-5/12 xl:w-2/5 relative bg-primary overflow-hidden">
@@ -112,12 +184,12 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
               <Layers className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-white tracking-tight">SIMMAS</span>
+            <span className="text-lg font-bold text-white tracking-tight">{settings.appName}</span>
           </Link>
 
           <div className="space-y-6 -mt-8">
             <p className="text-[11px] font-bold tracking-widest uppercase text-white/50">
-              Sistem Informasi Manajemen Magang Siswa
+              {settings.appFullName}
             </p>
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight">
               Magang<br />
@@ -125,7 +197,7 @@ export default function LoginPage() {
               <span className="text-white/70">teratur.</span>
             </h1>
             <p className="text-sm text-white/50 max-w-xs leading-relaxed">
-              Platform manajemen magang siswa SMK yang menghubungkan sekolah, guru pembimbing, dan dunia usaha dalam satu sistem terpadu.
+              {settings.appDescription}
             </p>
             <ul className="space-y-3 pt-2">
               {benefits.map((t, i) => (
@@ -154,7 +226,7 @@ export default function LoginPage() {
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <Layers className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-bold text-lg text-foreground">SIMMAS</span>
+            <span className="font-bold text-lg text-foreground">{settings.appName}</span>
           </div>
 
           <div>
@@ -233,6 +305,15 @@ export default function LoginPage() {
                 </>
               )}
             </button>
+            <div className="w-full flex justify-center">
+              <GoogleLogin
+                onSuccess={(credentialResponse) => { if (credentialResponse.credential) handleGoogle(credentialResponse.credential); }}
+                onError={() => ApiError.isError("Gagal menyambungkan ke akun Google.")}
+                width="320"
+                text="signin_with"
+                shape="pill"
+              />
+            </div>
           </form>
 
           <div>

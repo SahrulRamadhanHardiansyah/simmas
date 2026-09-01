@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, ArrowRight, Layers } from "lucide-react";
+import { useSettings } from "@/components/SettingsContext";
 
 const navLinks = [
   { label: "Fitur", href: "#fitur" },
@@ -11,6 +12,7 @@ const navLinks = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { settings } = useSettings();
 
   return (
     <header className="fixed top-4 inset-x-4 z-50">
@@ -19,7 +21,7 @@ export default function Navbar() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <Layers className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-foreground tracking-tight">SIMMAS</span>
+          <span className="text-lg font-bold text-foreground tracking-tight">{settings.appName}</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">

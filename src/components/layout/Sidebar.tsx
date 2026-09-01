@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Layers, LayoutDashboard, Globe, Users, UserSquare, Building2, MapPin, Settings, Activity, ChevronsLeft, ChevronsRight, X, FileText } from "lucide-react";
+import { Layers, LayoutDashboard, Globe, Users, UserSquare, Building2, MapPin, Settings, Activity, ChevronsLeft, ChevronsRight, X, FileText, BookOpen, GraduationCap } from "lucide-react";
+import { useSettings } from "@/components/SettingsContext";
 
 export const NavbarData: Record<"admin" | "guru" | "siswa", { title: string; items: { name: string; href: string; icon: typeof LayoutDashboard }[] }[]> = {
     admin: [
@@ -19,6 +20,8 @@ export const NavbarData: Record<"admin" | "guru" | "siswa", { title: string; ite
                 { name: "Data Guru", href: "/admin/guru", icon: UserSquare },
                 { name: "Data Siswa", href: "/admin/siswa", icon: Users },
                 { name: "Data DUDI", href: "/admin/dudi", icon: Building2 },
+                { name: "Jurusan", href: "/admin/jurusan", icon: BookOpen },
+                { name: "Kelas", href: "/admin/kelas", icon: GraduationCap },
             ],
         },
         {
@@ -85,6 +88,7 @@ interface SidebarProps {
 export default function Sidebar({ role, collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
     const pathname = usePathname();
     const sections = NavbarData[role] || [];
+    const { settings } = useSettings();
 
     const roleLabel = role === "admin" ? "Administrator" : role.charAt(0).toUpperCase() + role.slice(1);
 
@@ -102,7 +106,7 @@ export default function Sidebar({ role, collapsed, onToggle, mobileOpen, onMobil
                             <Layers className="w-4 h-4 text-white" />
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">
-                            <span className="font-bold text-sm tracking-tight text-foreground leading-tight">SIMMAS</span>
+                            <span className="font-bold text-sm tracking-tight text-foreground leading-tight">{settings.appName}</span>
                             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{roleLabel}</span>
                         </div>
                     </>

@@ -96,13 +96,12 @@ export function AlertProvider({ children }: { children: ReactNode }) {
 export function useAlert(): AlertContextValue {
     const ctx = useContext(AlertContext);
     if (!ctx) {
-        // ponytail: outside-provider fallback so calls don't throw during dev hot-reload
         return {
-            show: () => {},
-            success: () => {},
-            error: () => {},
-            warning: () => {},
-            info: () => {},
+            show: () => { },
+            success: () => { },
+            error: () => { },
+            warning: () => { },
+            info: () => { },
         };
     }
     return ctx;

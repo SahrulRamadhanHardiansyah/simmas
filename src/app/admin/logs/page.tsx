@@ -88,7 +88,6 @@ export default function AdminLogsPage() {
                 const text = await res.text();
                 const result = text ? JSON.parse(text) : null;
                 if (res.ok && result?.status) {
-                    // Backend: { status, data: [...], pagination: { currentPage, pageSize, totalData, totalPages } }
                     setLogs(result.data ?? []);
                     const p = result.pagination ?? {};
                     setTotalData(p.totalData ?? (result.data?.length ?? 0));

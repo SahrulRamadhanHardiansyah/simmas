@@ -17,16 +17,11 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-const KELAS_OPTIONS = [
-    "X PPLG 1", "X TJKT 1", "X TJKT 2", "X TE 1",
-    "XI PPLG 1", "XI TJKT 1", "XI TJKT 2", "XI TE 1",
-    "XII PPLG 1", "XII TJKT 1", "XII TJKT 2", "XII TE 1",
-];
-
 export default function AdminSiswaPage() {
     const alertApi = useAlert();
     const [stats, setStats] = useState({ totalSiswa: 0, sedangMagang: 0, belumMagang: 0, lulusMagang: 0 });
     const [data, setData] = useState<any[]>([]);
+    const [kelasList, setKelasList] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebounce(search, 500);
@@ -39,7 +34,7 @@ export default function AdminSiswaPage() {
     const [newCreds, setNewCreds] = useState<{ email: string; passwordSementara: string } | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
-    const [formData, setFormData] = useState({ name: "", nis: "", kelas: KELAS_OPTIONS[0], isActive: true });
+    const [formData, setFormData] = useState({ name: "", nis: "", kelasId: "", isActive: true });
     const [guruList, setGuruList] = useState<any[]>([]);
     const [dudiList, setDudiList] = useState<any[]>([]);
     const [loadingPlotting, setLoadingPlotting] = useState(false);
@@ -57,6 +52,7 @@ export default function AdminSiswaPage() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Siswa?${queryParams}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
+
             const result = await res.json();
             if (res.ok && result.status) {
                 setData(result.data);
@@ -73,6 +69,21 @@ export default function AdminSiswaPage() {
     useEffect(() => {
         fetchSiswa();
     }, [debouncedSearch, filterKelas]);
+
+    const fetchKelas = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Kelas`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await res.json();
+            if (res.ok && result.status) setKelasList(result.data);
+        } catch (err) {
+            console.error("Gagal mengambil data kelas", err);
+        }
+    };
+
+    useEffect(() => { fetchKelas(); }, []);
 
     // Client-side status filter
     const filteredData = filterStatus
@@ -120,9 +131,9 @@ export default function AdminSiswaPage() {
     const openModal = (type: typeof activeModal, siswa?: any) => {
         setSelectedSiswa(siswa || null);
         if (type === "add") {
-            setFormData({ name: "", nis: "", kelas: KELAS_OPTIONS[0], isActive: true });
+            setFormData({ name: "", nis: "", kelasId: "", isActive: true });
         } else if (type === "edit" && siswa) {
-            setFormData({ name: siswa.name, nis: siswa.nis, kelas: siswa.kelas, isActive: siswa.isActive });
+            setFormData({ name: siswa.name, nis: siswa.nis, kelasId: String(siswa.kelasId ?? ""), isActive: siswa.isActive });
         } else if (type === "status" && siswa) {
             setFormData({ ...formData, isActive: siswa.isActive });
         } else if (type === "plotting" && siswa) {
@@ -173,7 +184,7 @@ export default function AdminSiswaPage() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Siswa`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ name: formData.name, nis: formData.nis, kelas: formData.kelas })
+                body: JSON.stringify({ name: formData.name, nis: formData.nis, kelasId: parseInt(formData.kelasId) })
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
@@ -198,7 +209,7 @@ export default function AdminSiswaPage() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Admin/Siswa/${selectedSiswa.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ name: formData.name, kelas: formData.kelas })
+                body: JSON.stringify({ name: formData.name, kelasId: parseInt(formData.kelasId) })
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
@@ -348,7 +359,7 @@ export default function AdminSiswaPage() {
                             className="w-full pl-9 pr-8 py-2 bg-muted/30 border border-border rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
                         >
                             <option value="">Semua Kelas</option>
-                            {KELAS_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
+                            {kelasList.map((k: any) => <option key={k.id} value={k.namaKelas}>{k.namaKelas}</option>)}
                         </select>
                     </div>
 
@@ -552,9 +563,10 @@ export default function AdminSiswaPage() {
                                     </div>
                                     <div>
                                         <label className="block text-[11px] font-bold text-muted-foreground tracking-widest uppercase mb-1.5">Kelas</label>
-                                        <select required value={formData.kelas} onChange={e => setFormData({ ...formData, kelas: e.target.value })}
+                                        <select required value={formData.kelasId} onChange={e => setFormData({ ...formData, kelasId: e.target.value })}
                                             className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
-                                            {KELAS_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
+                                            <option value="">Pilih Kelas</option>
+                                            {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.namaKelas}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -632,9 +644,10 @@ export default function AdminSiswaPage() {
                                     </div>
                                     <div>
                                         <label className="block text-[11px] font-bold text-muted-foreground tracking-widest uppercase mb-1.5">Kelas</label>
-                                        <select required value={formData.kelas} onChange={e => setFormData({ ...formData, kelas: e.target.value })}
+                                        <select required value={formData.kelasId} onChange={e => setFormData({ ...formData, kelasId: e.target.value })}
                                             className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
-                                            {KELAS_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
+                                            <option value="">Pilih Kelas</option>
+                                            {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.namaKelas}</option>)}
                                         </select>
                                     </div>
                                 </div>

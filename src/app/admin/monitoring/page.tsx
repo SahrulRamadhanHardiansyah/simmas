@@ -136,14 +136,33 @@ export default function MonitoringGlobalPage() {
         <div className="space-y-6 w-full relative">
 
             {/* 1. SECTION STATISTIK */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                 {[
-                    { title: "TOTAL SISWA AKTIF", val: stats.totalSiswaAktif, sub: "Siswa sedang magang", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-                    { title: "TINGKAT KEHADIRAN", val: stats.tingkatKehadiran, sub: "Rata-rata kehadiran harian", icon: Activity, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-                    { title: "JURNAL TERKUMPUL", val: stats.jurnalTerkumpul, sub: "Total jurnal minggu ini", icon: BookOpen, color: "text-purple-500", bg: "bg-purple-500/10" },
-                    { title: "PERLU PERHATIAN", val: stats.perluPerhatian, sub: "Siswa bermasalah/alfa", icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10" },
+                    { title: "TOTAL SISWA AKTIF", val: stats.totalSiswaAktif, sub: "Siswa sedang magang", icon: Users, color: "text-blue-500", bg: "bg-red", bgCard: "bg-red-600" },
+                    { title: "TINGKAT KEHADIRAN", val: stats.tingkatKehadiran, sub: "Rata-rata kehadiran harian", icon: Activity, color: "text-emerald-500", bg: "bg-emerald-500/10", bgCard: "bg-yellow-500" },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-background rounded-2xl p-5 border border-border shadow-sm flex flex-col justify-between">
+                    <div key={i} className={`${stat.bgCard} rounded-2xl p-5 border border-border shadow-sm flex flex-col justify-between`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <p className="text-[11px] font-bold text-muted-foreground tracking-widest">{stat.title}</p>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.bg} ${stat.color}`}>
+                                <stat.icon className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <div>
+                            {loadingStats ? (
+                                <div className="h-8 w-16 bg-muted animate-pulse rounded mb-1"></div>
+                            ) : (
+                                <h3 className="text-3xl font-extrabold text-foreground mb-1">{stat.val}</h3>
+                            )}
+                            <p className="text-xs font-medium text-muted-foreground">{stat.sub}</p>
+                        </div>
+                    </div>
+                ))}
+                {[
+                    { title: "JURNAL TERKUMPUL", val: stats.jurnalTerkumpul, sub: "Total jurnal minggu ini", icon: BookOpen, color: "text-purple-500", bg: "bg-purple-500/10", bgCard: "bg-blue-600" },
+                    { title: "PERLU PERHATIAN", val: stats.perluPerhatian, sub: "Siswa bermasalah/alfa", icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10", bgCard: "bg-green-600" },
+                ].map((stat, i) => (
+                    <div key={i} className={`${stat.bgCard} rounded-2xl p-5 border border-border shadow-sm flex flex-col justify-between`}>
                         <div className="flex justify-between items-start mb-4">
                             <p className="text-[11px] font-bold text-muted-foreground tracking-widest">{stat.title}</p>
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.bg} ${stat.color}`}>
@@ -163,14 +182,14 @@ export default function MonitoringGlobalPage() {
             </div>
 
             {/* 2. SECTION PENCARIAN & FILTER */}
-            <div className="bg-background rounded-2xl border border-border p-4 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="bg-background rounded-2xl border border-border p-4 shadow-sm flex flex-col sm:flex-row gap-4 items-center">
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     {/* Search Box */}
                     <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Cari siswa atau DUDI..."
+                            placeholder="Cari"
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                             className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
